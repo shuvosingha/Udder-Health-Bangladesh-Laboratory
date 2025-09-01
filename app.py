@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date
 
 # --- SuperAdmin Credentials ---
 USERNAME = "superadmin"
@@ -36,7 +36,7 @@ st.title("🐄 Udder Health Bangladesh — SuperAdmin Panel")
 # --- Farmer Submission Form ---
 st.header("📥 Submit Farmer Sample")
 with st.form("farmer_form"):
-    date = st.date_input("Date of Submission", value=datetime.today())
+    date_submitted = st.date_input("Date of Submission", value=date.today())
     farmer_name = st.text_input("Farmer's Name")
     farm_name = st.text_input("Farm Name")
     location = st.text_input("Location")
@@ -57,14 +57,15 @@ with st.form("farmer_form"):
 
     if submitted:
         entry = {
-            "Date": date, "Farmer": farmer_name, "Farm": farm_name, "Location": location, "Mobile": mobile,
+            "Date": date_submitted, "Farmer": farmer_name, "Farm": farm_name, "Location": location, "Mobile": mobile,
             "Milk Today": milk_today, "Lactating Total": lactating_total, "Lactating <3M": lactating_0_3,
             "Lactating 3–6M": lactating_3_6, "Lactating 6–9M": lactating_6_9, "Lactating >9M": lactating_9_plus,
             "Dry Cows": dry_cows, "Heifers": heifers, "Calves <1Y": calves,
             "Mastitis Now": mastitis_now, "Mastitis Last": mastitis_last, "Breed": breed,
-            "Somatic Cell Count": None, "SCC Grade": None, "SCC Status": None,
-            "Fat%": None, "Protein%": None, "Lactose%": None, "SNF": None, "Freezing Point": None, "Milk Comp Status": None,
-            "TBC": None, "TBC Status": None
+            "Somatic Cell Count": None, "SCC Grade": None, "SCC Status": None, "SCC Entry Date": None,
+            "Fat%": None, "Protein%": None, "Lactose%": None, "SNF": None, "Freezing Point": None,
+            "Milk Comp Status": None, "Milk Composition Entry Date": None,
+            "TBC": None, "TBC Status": None, "TBC Entry Date": None
         }
         st.session_state.data = pd.concat([st.session_state.data, pd.DataFrame([entry])], ignore_index=True)
         st.success("✅ Submission successful!")
@@ -81,13 +82,17 @@ for i, row in st.session_state.data.iterrows():
     fp = st.number_input("Freezing Point", key=f"fp_{i}")
     tbc = st.number_input("Total Bacterial Count (TBC)", key=f"tbc_{i}", min_value=0)
     if st.button(f"Save Lab Data for {row['Farmer']}", key=f"lab_btn_{i}"):
+        today = date.today()
         st.session_state.data.at[i, "Somatic Cell Count"] = scc
+        st.session_state.data.at[i, "SCC Entry Date"] = today
         st.session_state.data.at[i, "Fat%"] = fat
         st.session_state.data.at[i, "Protein%"] = protein
         st.session_state.data.at[i, "Lactose%"] = lactose
         st.session_state.data.at[i, "SNF"] = snf
         st.session_state.data.at[i, "Freezing Point"] = fp
+        st.session_state.data.at[i, "Milk Composition Entry Date"] = today
         st.session_state.data.at[i, "TBC"] = tbc
+        st.session_state.data.at[i, "TBC Entry Date"] = today
         st.success(f"✅ Lab data saved for {row['Farmer']}")
 
 # --- Data Analysis & Certification ---
@@ -128,10 +133,13 @@ def check_pending(row):
     return ", ".join(pending) if pending else "✅ All Inputs Done"
 df["Pending Inputs"] = df.apply(check_pending, axis=1)
 
+# Days Since Submission
+df["Days Since Submission"] = (pd.to_datetime(date.today()) - pd.to_datetime(df["Date"])).dt.days
+
 # Display Summary
 st.subheader("🧾 Submission Status Overview")
 st.dataframe(df[[
-    "Farmer", "Date", "Farm", "Pending Inputs",
+    "Farmer", "Date", "Farm", "Days Since Submission", "Pending Inputs",
     "SCC Grade", "SCC Status", "Milk Comp Status", "TBC Status"
 ]])
 
@@ -147,6 +155,7 @@ for i, row in df.iterrows():
         Somatic Cell Count: {row['Somatic Cell Count']}
         Grade: {row['SCC Grade']}
         Status: {row['SCC Status']}
+        Entry Date: {row['SCC Entry Date']}
         """)
     
     elif cert_type == "Milk Composition":
@@ -157,12 +166,14 @@ for i, row in df.iterrows():
         SNF: {row['SNF']}
         Freezing Point: {row['Freezing Point']}
         Status: {row['Milk Comp Status']}
+        Entry Date: {row['Milk Composition Entry Date']}
         """)
     
     elif cert_type == "TBC":
         st.write(f"""
         Total Bacterial Count (TBC): {row['TBC']}
         Status: {row['TBC Status']}
+        Entry Date: {row['TBC Entry Date']}
         """)
 
 # CSV Download
