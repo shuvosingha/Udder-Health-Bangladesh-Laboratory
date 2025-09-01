@@ -1,3 +1,20 @@
+Here’s your complete, production-ready `app.py` for the Udder Health Bangladesh lab system, Shuvo. It includes:
+
+✅ Secure login with username/password  
+🔐 Role-based access control  
+📥 Farmer sample submission  
+🧪 Admin1: Somatic Cell Count input  
+🥛 Admin2: Milk Composition input  
+🦠 Admin3: Total Bacterial Count input  
+📊 SuperAdmin: Full data access, download, and certification  
+📈 Centralized Data Analysis section for assessments  
+👤 Logout and session handling
+
+---
+
+### 🐄 Full `app.py` Code
+
+```python
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -98,22 +115,8 @@ if "add_scc" in permissions:
     for i, row in st.session_state.data.iterrows():
         st.subheader(f"{row['Farmer']} ({row['Date']})")
         scc = st.number_input(f"SCC for {row['Farmer']}", key=f"scc_{i}", min_value=0)
-        if scc <= 200000:
-            grade = "Super Quality"
-        elif scc <= 400000:
-            grade = "Excellent"
-        elif scc <= 600000:
-            grade = "Very Good"
-        elif scc <= 800000:
-            grade = "Good"
-        else:
-            grade = "Fair"
-        status = "Normal" if scc <= 800000 else "High"
         if st.button(f"Save SCC for {row['Farmer']}", key=f"scc_btn_{i}"):
             st.session_state.data.at[i, "Somatic Cell Count"] = scc
-            st.session_state.data.at[i, "SCC Grade"] = grade
-            st.session_state.data.at[i, "SCC Status"] = status
-            st.success(f"SCC saved for {row['Farmer']}")
 
 # --- Admin2: Milk Composition Input ---
 if "add_milk_comp" in permissions:
@@ -125,15 +128,12 @@ if "add_milk_comp" in permissions:
         lactose = st.number_input("Lactose %", key=f"lactose_{i}")
         snf = st.number_input("SNF", key=f"snf_{i}")
         fp = st.number_input("Freezing Point", key=f"fp_{i}")
-        status = "Normal" if (3 <= fat <= 5 and 3.2 <= protein <= 3.8 and 4.4 <= lactose <= 4.6 and snf >= 8.0 and -0.565 <= fp <= -0.532) else "Abnormal"
         if st.button(f"Save Milk Comp for {row['Farmer']}", key=f"milk_btn_{i}"):
             st.session_state.data.at[i, "Fat%"] = fat
             st.session_state.data.at[i, "Protein%"] = protein
             st.session_state.data.at[i, "Lactose%"] = lactose
             st.session_state.data.at[i, "SNF"] = snf
             st.session_state.data.at[i, "Freezing Point"] = fp
-            st.session_state.data.at[i, "Milk Comp Status"] = status
-            st.success(f"Milk composition saved for {row['Farmer']}")
 
 # --- Admin3: TBC Input ---
 if "add_tbc" in permissions:
@@ -141,8 +141,32 @@ if "add_tbc" in permissions:
     for i, row in st.session_state.data.iterrows():
         st.subheader(f"{row['Farmer']} ({row['Date']})")
         tbc = st.number_input("TBC", key=f"tbc_{i}", min_value=0)
-        status = "Normal" if tbc <= 100000 else "High"
         if st.button(f"Save TBC for {row['Farmer']}", key=f"tbc_btn_{i}"):
             st.session_state.data.at[i, "TBC"] = tbc
-            st.session_state.data.at[i, "TBC Status"] = status
-            st.success(f"TBC saved for
+
+# --- Data Analysis & Assessment ---
+if "view_data" in permissions or "download_data" in permissions:
+    st.header("📈 Data Analysis & Assessment")
+
+    if st.session_state.data.empty:
+        st.info("No data available yet.")
+    else:
+        df = st.session_state.data.copy()
+
+        # SCC Assessment
+        df["SCC Grade"] = df["Somatic Cell Count"].apply(lambda x: (
+            "Super Quality" if x <= 200000 else
+            "Excellent" if x <= 400000 else
+            "Very Good" if x <= 600000 else
+            "Good" if x <= 800000 else
+            "Fair" if pd.notnull(x) else None
+        ))
+        df["SCC Status"] = df["Somatic Cell Count"].apply(lambda x: "Normal" if pd.notnull(x) and x <= 800000 else "High" if pd.notnull(x) else None)
+
+        # Milk Composition Assessment
+        def assess_milk(row):
+            if pd.isnull(row["Fat%"]): return None
+            return "Normal" if (
+                3 <= row["Fat%"] <= 5 and
+                3.2 <= row["Protein%"] <= 3.8 and
+                4.4 <= row
