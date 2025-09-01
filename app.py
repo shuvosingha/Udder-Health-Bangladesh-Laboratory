@@ -99,9 +99,6 @@ for i, row in st.session_state.data.iterrows():
 st.header("📈 Data Analysis & Certification")
 df = st.session_state.data.copy()
 
-if df.empty or "Somatic Cell Count" not in df.columns:
-    st.info("📭 No data available to analyze. Please submit farmer samples first.")
-else:
 
 # SCC Assessment
 df["SCC Grade"] = df["Somatic Cell Count"].apply(lambda x: (
