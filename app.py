@@ -127,6 +127,44 @@ if "add_tbc" in permissions:
         if st.button(f"Save TBC for {row['Farmer']}", key=f"tbc_btn_{i}"):
             st.session_state.data.at[i, "TBC"] = tbc
 
+
+# --- Unified Data View for Admins ---
+if st.session_state.role in ["Admin1", "Admin2", "Admin3", "SuperAdmin"]:
+    st.header("📋 Full Submission Table")
+    st.dataframe(st.session_state.data)
+
+    st.markdown("---")
+
+    # Role-specific input sections
+    if st.session_state.role in ["Admin1", "SuperAdmin"]:
+        st.subheader("🧪 Somatic Cell Count Entry")
+        for i, row in st.session_state.data.iterrows():
+            scc = st.number_input(f"SCC for {row['Farmer']} ({row['Date']})", key=f"scc_{i}", min_value=0)
+            if st.button(f"Save SCC for {row['Farmer']}", key=f"scc_btn_{i}"):
+                st.session_state.data.at[i, "Somatic Cell Count"] = scc
+
+    if st.session_state.role in ["Admin2", "SuperAdmin"]:
+        st.subheader("🥛 Milk Composition Entry")
+        for i, row in st.session_state.data.iterrows():
+            fat = st.number_input("Fat %", key=f"fat_{i}")
+            protein = st.number_input("Protein %", key=f"protein_{i}")
+            lactose = st.number_input("Lactose %", key=f"lactose_{i}")
+            snf = st.number_input("SNF", key=f"snf_{i}")
+            fp = st.number_input("Freezing Point", key=f"fp_{i}")
+            if st.button(f"Save Milk Comp for {row['Farmer']}", key=f"milk_btn_{i}"):
+                st.session_state.data.at[i, "Fat%"] = fat
+                st.session_state.data.at[i, "Protein%"] = protein
+                st.session_state.data.at[i, "Lactose%"] = lactose
+                st.session_state.data.at[i, "SNF"] = snf
+                st.session_state.data.at[i, "Freezing Point"] = fp
+
+    if st.session_state.role in ["Admin3", "SuperAdmin"]:
+        st.subheader("🦠 Total Bacterial Count Entry")
+        for i, row in st.session_state.data.iterrows():
+            tbc = st.number_input("TBC", key=f"tbc_{i}", min_value=0)
+            if st.button(f"Save TBC for {row['Farmer']}", key=f"tbc_btn_{i}"):
+                st.session_state.data.at[i, "TBC"] = tbc
+
 # --- Data Analysis & Assessment ---
 if "view_data" in permissions or "download_data" in permissions:
     st.header("📈 Data Analysis & Assessment")
