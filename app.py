@@ -145,5 +145,34 @@ if st.session_state.role in ["Admin1", "Admin2", "SuperAdmin"]:
         # Pending Input Tracker
         def check_pending(row):
             pending = []
-            if pd.isnull(row["Somatic Cell Count"]): pending.append("SCC")
-            if any(pd.isnull(row[col]) for col in ["Fat%", "Protein%", "Lact
+            if pd.isnull(row["Somatic Cell Count"]):
+                pending.append("SCC")
+            if any(pd.isnull(row[col]) for col in ["Fat%", "Protein%", "Lactose%", "SNF", "Freezing Point"]):
+                pending.append("Milk Comp")
+            if pd.isnull(row["TBC"]):
+                pending.append("TBC")
+            return ", ".join(pending) if pending else "✅ All Inputs Done"
+
+        df["Pending Inputs"] = df.apply(check_pending, axis=1)
+
+        # Display Submission Status Overview
+        st.subheader("🧾 Submission Status Overview")
+        st.dataframe(df[[
+            "Farmer", "Date", "Farm", "Pending Inputs",
+            "SCC Grade", "SCC Status", "Milk Comp Status", "TBC Status"
+        ]])
+
+        # SuperAdmin: Certification + Download
+        if st.session_state.role == "SuperAdmin":
+            st.subheader("📄 Generate Certifications")
+            cert_type = st.selectbox("Select Certification Type", ["Somatic Cell Count", "Milk Composition", "TBC"])
+            for i, row in df.iterrows():
+                st.markdown(f"**Farmer:** {row['Farmer']} | **Date:** {row['Date']}")
+                if cert_type == "Somatic Cell Count":
+                    st.write(f"SCC: {row['Somatic Cell Count']} | Grade: {row['SCC Grade']} | Status: {row['SCC Status']}")
+                elif cert_type == "Milk Composition":
+                    st.write(f"Fat: {row['Fat%']} | Protein: {row['Protein%']} | Lactose: {row['Lactose%']} | SNF: {row['SNF']} | FP: {row['Freezing Point']} | Status: {row['Milk Comp Status']}")
+                elif cert_type == "TBC":
+                    st.write(f"TBC: {row['TBC']} | Status: {row['TBC Status']}")
+
+            st.download_button("📥 Download Full Dataset", df.to_csv(index=False), "udder_health_data.csv")
