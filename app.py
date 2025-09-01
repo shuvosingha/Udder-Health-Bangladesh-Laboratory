@@ -4,22 +4,32 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
+# --- Role Permissions ---
+ROLE_PERMISSIONS = {
+    "Farmer": ["submit_data"],
+    "Admin1": ["view_data", "add_scc"],
+    "Admin2": ["view_data", "add_milk_comp"],
+    "Admin3": ["view_data", "add_tbc"],
+    "SuperAdmin": ["view_data", "add_scc", "add_milk_comp", "add_tbc", "download_data", "generate_cert"]
+}
+
 # --- Session State Setup ---
 if "role" not in st.session_state:
     st.session_state.role = None
-
-# --- Role Selection ---
-st.title("🐄 Udder Health Bangladesh")
-st.sidebar.title("Login")
-role = st.sidebar.selectbox("Select your role", ["Farmer", "Admin1", "Admin2", "Admin3", "SuperAdmin"])
-st.session_state.role = role
-
-# --- Data Storage ---
 if "data" not in st.session_state:
     st.session_state.data = pd.DataFrame()
 
-# --- Farmer Submission Form ---
-if role == "Farmer":
+# --- Sidebar Login ---
+st.sidebar.title("🔐 Role Login")
+role = st.sidebar.selectbox("Select your role", list(ROLE_PERMISSIONS.keys()))
+st.session_state.role = role
+permissions = ROLE_PERMISSIONS[role]
+
+# --- App Title ---
+st.title("🐄 Udder Health Bangladesh")
+
+# --- Farmer Submission ---
+if "submit_data" in permissions:
     st.header("📥 Sample Submission Form")
     with st.form("farmer_form"):
         date = st.date_input("Date of Submission", value=datetime.today())
@@ -55,12 +65,12 @@ if role == "Farmer":
             st.session_state.data = pd.concat([st.session_state.data, pd.DataFrame([entry])], ignore_index=True)
             st.success("Submission successful!")
 
-# --- Admin1: Somatic Cell Count ---
-elif role == "Admin1":
+# --- Admin1: SCC Input ---
+if "add_scc" in permissions:
     st.header("🧪 Somatic Cell Count Entry")
     for i, row in st.session_state.data.iterrows():
         st.subheader(f"{row['Farmer']} ({row['Date']})")
-        scc = st.number_input(f"Somatic Cell Count for {row['Farmer']}", key=f"scc_{i}", min_value=0)
+        scc = st.number_input(f"SCC for {row['Farmer']}", key=f"scc_{i}", min_value=0)
         if scc <= 200000:
             grade = "Super Quality"
         elif scc <= 400000:
@@ -78,8 +88,8 @@ elif role == "Admin1":
             st.session_state.data.at[i, "SCC Status"] = status
             st.success(f"SCC saved for {row['Farmer']}")
 
-# --- Admin2: Milk Composition ---
-elif role == "Admin2":
+# --- Admin2: Milk Composition Input ---
+if "add_milk_comp" in permissions:
     st.header("🥛 Milk Composition Entry")
     for i, row in st.session_state.data.iterrows():
         st.subheader(f"{row['Farmer']} ({row['Date']})")
@@ -98,8 +108,8 @@ elif role == "Admin2":
             st.session_state.data.at[i, "Milk Comp Status"] = status
             st.success(f"Milk composition saved for {row['Farmer']}")
 
-# --- Admin3: TBC Entry ---
-elif role == "Admin3":
+# --- Admin3: TBC Input ---
+if "add_tbc" in permissions:
     st.header("🦠 Total Bacterial Count Entry")
     for i, row in st.session_state.data.iterrows():
         st.subheader(f"{row['Farmer']} ({row['Date']})")
@@ -110,13 +120,13 @@ elif role == "Admin3":
             st.session_state.data.at[i, "TBC Status"] = status
             st.success(f"TBC saved for {row['Farmer']}")
 
-# --- SuperAdmin: Full Access & Certification ---
-elif role == "SuperAdmin":
-    st.header("📊 Full Data Overview & Certification")
+# --- SuperAdmin: Full Access ---
+if "download_data" in permissions:
+    st.header("📊 Full Data Overview")
     st.dataframe(st.session_state.data)
+    st.download_button("Download CSV", st.session_state.data.to_csv(index=False), "udder_health_data.csv")
 
-    st.download_button("Download Full Dataset", st.session_state.data.to_csv(index=False), "udder_health_data.csv")
-
+if "generate_cert" in permissions:
     st.subheader("📄 Generate Certifications")
     cert_type = st.selectbox("Select Certification Type", ["Somatic Cell Count", "Milk Composition", "TBC"])
     for i, row in st.session_state.data.iterrows():
@@ -126,4 +136,4 @@ elif role == "SuperAdmin":
         elif cert_type == "Milk Composition":
             st.write(f"Fat: {row['Fat%']} | Protein: {row['Protein%']} | Lactose: {row['Lactose%']} | SNF: {row['SNF']} | FP: {row['Freezing Point']} | Status: {row['Milk Comp Status']}")
         elif cert_type == "TBC":
-            st.write(f"TBC: {row['TBC']} | Status: {row['TBC Status']}")
+            st.write(f"TBC: {row['TBC']} |
