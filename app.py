@@ -234,9 +234,3 @@ def check_pending(row):
     if pd.isnull(row.get("TBC")):
         pending.append("Admin3: TBC")
     return ", ".join(pending) if pending else "✅ All Inputs Done"
-
-df = st.session_state.data.copy()
-df["Pending Inputs"] = df.apply(check_pending, axis=1)
-
-st.subheader("🧾 Submission Status Overview")
-st.dataframe(df[["Farmer", "Date", "Farm", "Pending Inputs"]])
