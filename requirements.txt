@@ -4,4 +4,6 @@ pandas
 seaborn
 fpdf
 Pillow
+fpdf2
+
 
