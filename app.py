@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime, date
 
+
 # --- SuperAdmin Credentials ---
 USERNAME = "superadmin"
 PASSWORD = "superpass"
@@ -190,6 +191,67 @@ else:
         data=df.to_csv(index=False),
         file_name="udder_health_data.csv",
         mime="text/csv"
+    )
+
+from fpdf import FPDF
+import io
+
+def generate_scc_certificate(row):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Background image
+    pdf.image("letterpad_scc.png", x=0, y=0, w=210)
+
+    # Extract values
+    test_date = pd.to_datetime(row["Date"]).strftime("%-d %B %Y")
+    next_test_date = (pd.to_datetime(row["Date"]) + pd.Timedelta(days=30)).strftime("%-d %B %Y")
+    farm_name = row["Farm"]
+    location = row["Location"]
+    farmer_name = row["Farmer"]
+    lactating_cows = int(row["Lactating Total"])
+    scc_value = int(row["Somatic Cell Count"])
+    scc_grade = row["SCC Grade"]
+
+    # Certificate text
+    pdf.set_xy(20, 40)
+    pdf.multi_cell(0, 10, f"""This is to certify that bulk milk sample tested on {test_date} from {farm_name} located at {location} owned by Mr. {farmer_name} for somatic cell count (SCC) using Ekomilk Horizon UNLIMITED milk analyzer (EKOMILK, Bulgaria).
+
+The test result for SCC obtained from bulk milk of {lactating_cows} lactating cows was {scc_value:,} cells/mL of milk.
+The milk quality was “{scc_grade}” according to the test results.
+
+Milk Quality Categorization — Somatic Cell Count (cells/mL of milk):
+☐ Super quality < 200,000
+☐ Excellent 200,000 to < 400,000
+☐ Very good 400,000 to < 600,000
+☐ Good 600,000 to < 800,000
+█ Fair ≥ 800,000
+
+This test is valid for one month.
+Next suggested test date: {next_test_date}.
+""")
+
+    buffer = io.BytesIO()
+    pdf.output(buffer)
+    return buffer
+    
+# Inside your SCC certification loop
+if cert_type == "Somatic Cell Count":
+    st.write(f"""
+    Somatic Cell Count: {row['Somatic Cell Count']}
+    Grade: {row['SCC Grade']}
+    Status: {row['SCC Status']}
+    Entry Date: {row['SCC Entry Date']}
+    """)
+
+    # PDF download button
+    pdf_buffer = generate_scc_certificate(row)
+    st.download_button(
+        label="📄 Download SCC Certificate as PDF",
+        data=pdf_buffer.getvalue(),
+        file_name=f"scc_certificate_{row['Farmer'].replace(' ', '_')}.pdf",
+        mime="application/pdf"
     )
 
     # --- Interactive Dashboard ---
