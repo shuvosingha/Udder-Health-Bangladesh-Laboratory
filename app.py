@@ -1,8 +1,15 @@
-# app.py
-
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+
+# --- User Credentials ---
+USERS = {
+    "farmer1": {"password": "milk123", "role": "Farmer"},
+    "admin1": {"password": "scc456", "role": "Admin1"},
+    "admin2": {"password": "milk789", "role": "Admin2"},
+    "admin3": {"password": "tbc321", "role": "Admin3"},
+    "superadmin": {"password": "labmaster", "role": "SuperAdmin"}
+}
 
 # --- Role Permissions ---
 ROLE_PERMISSIONS = {
@@ -16,17 +23,37 @@ ROLE_PERMISSIONS = {
 # --- Session State Setup ---
 if "role" not in st.session_state:
     st.session_state.role = None
+if "username" not in st.session_state:
+    st.session_state.username = None
 if "data" not in st.session_state:
     st.session_state.data = pd.DataFrame()
 
 # --- Sidebar Login ---
-st.sidebar.title("🔐 Role Login")
-role = st.sidebar.selectbox("Select your role", list(ROLE_PERMISSIONS.keys()))
-st.session_state.role = role
-permissions = ROLE_PERMISSIONS[role]
+st.sidebar.title("🔐 Login")
+if st.session_state.role is None:
+    username = st.sidebar.text_input("Username")
+    password = st.sidebar.text_input("Password", type="password")
+    login_btn = st.sidebar.button("Login")
+
+    if login_btn:
+        user = USERS.get(username)
+        if user and user["password"] == password:
+            st.session_state.role = user["role"]
+            st.session_state.username = username
+            st.success(f"Welcome, {username} ({user['role']})")
+        else:
+            st.error("Invalid username or password")
+else:
+    st.sidebar.markdown(f"👤 Logged in as: `{st.session_state.username}` | Role: `{st.session_state.role}`")
+    if st.sidebar.button("Logout"):
+        st.session_state.role = None
+        st.session_state.username = None
 
 # --- App Title ---
 st.title("🐄 Udder Health Bangladesh")
+
+# --- Permissions ---
+permissions = ROLE_PERMISSIONS.get(st.session_state.role, [])
 
 # --- Farmer Submission ---
 if "submit_data" in permissions:
@@ -118,22 +145,4 @@ if "add_tbc" in permissions:
         if st.button(f"Save TBC for {row['Farmer']}", key=f"tbc_btn_{i}"):
             st.session_state.data.at[i, "TBC"] = tbc
             st.session_state.data.at[i, "TBC Status"] = status
-            st.success(f"TBC saved for {row['Farmer']}")
-
-# --- SuperAdmin: Full Access ---
-if "download_data" in permissions:
-    st.header("📊 Full Data Overview")
-    st.dataframe(st.session_state.data)
-    st.download_button("Download CSV", st.session_state.data.to_csv(index=False), "udder_health_data.csv")
-
-if "generate_cert" in permissions:
-    st.subheader("📄 Generate Certifications")
-    cert_type = st.selectbox("Select Certification Type", ["Somatic Cell Count", "Milk Composition", "TBC"])
-    for i, row in st.session_state.data.iterrows():
-        st.markdown(f"**Farmer:** {row['Farmer']} | **Date:** {row['Date']}")
-        if cert_type == "Somatic Cell Count":
-            st.write(f"SCC: {row['Somatic Cell Count']} | Grade: {row['SCC Grade']} | Status: {row['SCC Status']}")
-        elif cert_type == "Milk Composition":
-            st.write(f"Fat: {row['Fat%']} | Protein: {row['Protein%']} | Lactose: {row['Lactose%']} | SNF: {row['SNF']} | FP: {row['Freezing Point']} | Status: {row['Milk Comp Status']}")
-        elif cert_type == "TBC":
-            st.write(f"TBC: {row['TBC']} |
+            st.success(f"TBC saved for
