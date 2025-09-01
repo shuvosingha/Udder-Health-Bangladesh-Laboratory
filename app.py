@@ -193,7 +193,7 @@ else:
         mime="text/csv"
     )
 
-from fpdf2 import FPDF
+from fpdf import FPDF
 import io
 
 def generate_scc_certificate(row):
@@ -226,7 +226,7 @@ Milk Quality Categorization — Somatic Cell Count (cells/mL of milk):
 ☐ Excellent 200,000 to < 400,000
 ☐ Very good 400,000 to < 600,000
 ☐ Good 600,000 to < 800,000
-█ Fair ≥ 800,000
+☐ Fair ≥ 800,000
 
 This test is valid for one month.
 Next suggested test date: {next_test_date}.
