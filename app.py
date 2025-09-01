@@ -33,13 +33,35 @@ else:
 # --- App Title ---
 st.title("🐄 Udder Health Bangladesh — SuperAdmin Panel")
 
+# --- Initialize Category Lists ---
+if "categories" not in st.session_state:
+    st.session_state.categories = {
+        "Farm Name": [],
+        "Location": [],
+        "Farmer's Name": [],
+        "Breed of Cows": []
+    }
+
+# --- Category Manager ---
+st.sidebar.header("🗂️ Category Manager")
+category = st.sidebar.selectbox("Select Category", list(st.session_state.categories.keys()))
+new_value = st.sidebar.text_input("Add New Value")
+if st.sidebar.button("➕ Add to Category"):
+    if new_value and new_value not in st.session_state.categories[category]:
+        st.session_state.categories[category].append(new_value)
+        st.sidebar.success(f"Added '{new_value}' to {category}")
+    elif new_value:
+        st.sidebar.warning(f"'{new_value}' already exists in {category}")
+
+
+
 # --- Farmer Submission Form ---
 st.header("📥 Submit Farmer Sample")
 with st.form("farmer_form"):
     date_submitted = st.date_input("Date of Submission", value=date.today())
-    farmer_name = st.text_input("Farmer's Name")
-    farm_name = st.text_input("Farm Name")
-    location = st.text_input("Location")
+    farmer_name = st.selectbox("Farmer's Name", st.session_state.categories["Farmer's Name"])
+    farm_name = st.selectbox("Farm Name", st.session_state.categories["Farm Name"])
+    location = st.selectbox("Location", st.session_state.categories["Location"])
     mobile = st.text_input("Mobile Number")
     milk_today = st.number_input("Total Litres of Milk Today", min_value=0.0)
     lactating_total = st.number_input("Total Lactating Cows", min_value=0)
@@ -52,7 +74,7 @@ with st.form("farmer_form"):
     calves = st.number_input("Calves <1 Year", min_value=0)
     mastitis_now = st.number_input("Clinical Mastitis Cases Now", min_value=0)
     mastitis_last = st.number_input("Clinical Mastitis Cases Last Month", min_value=0)
-    breed = st.text_input("Breed of Cows")
+    breed = st.selectbox("Breed of Cows", st.session_state.categories["Breed of Cows"])
     submitted = st.form_submit_button("Submit")
 
     if submitted:
