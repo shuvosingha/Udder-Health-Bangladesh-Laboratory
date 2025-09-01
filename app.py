@@ -166,6 +166,7 @@ if st.session_state.role in ["Admin1", "Admin2", "Admin3", "SuperAdmin"]:
                 st.session_state.data.at[i, "TBC"] = tbc
 
 # --- Data Analysis & Assessment ---
+# --- Data Analysis & Assessment ---
 if "view_data" in permissions or "download_data" in permissions:
     st.header("📈 Data Analysis & Assessment")
 
@@ -173,6 +174,23 @@ if "view_data" in permissions or "download_data" in permissions:
         st.info("No data available yet.")
     else:
         df = st.session_state.data.copy()
+
+        # Define check_pending before using it
+        def check_pending(row):
+            pending = []
+            if pd.isnull(row.get("Somatic Cell Count")):
+                pending.append("Admin1: SCC")
+            if any(pd.isnull(row.get(col)) for col in ["Fat%", "Protein%", "Lactose%", "SNF", "Freezing Point"]):
+                pending.append("Admin2: Milk Comp")
+            if pd.isnull(row.get("TBC")):
+                pending.append("Admin3: TBC")
+            return ", ".join(pending) if pending else "✅ All Inputs Done"
+
+        df["Pending Inputs"] = df.apply(check_pending, axis=1)
+
+        # Display status overview
+        st.subheader("🧾 Submission Status Overview")
+        st.dataframe(df[["Farmer", "Date", "Farm", "Pending Inputs"]])
 
         # SCC Assessment
         df["SCC Grade"] = df["Somatic Cell Count"].apply(lambda x: (
@@ -217,6 +235,7 @@ def check_pending(row):
         pending.append("Admin3: TBC")
     return ", ".join(pending) if pending else "✅ All Inputs Done"
 
+df = st.session_state.data.copy()
 df["Pending Inputs"] = df.apply(check_pending, axis=1)
 
 st.subheader("🧾 Submission Status Overview")
