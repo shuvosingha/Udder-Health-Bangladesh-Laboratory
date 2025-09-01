@@ -147,9 +147,12 @@ if "view_data" in permissions or "download_data" in permissions:
         df["SCC Status"] = df["Somatic Cell Count"].apply(lambda x: "Normal" if pd.notnull(x) and x <= 800000 else "High" if pd.notnull(x) else None)
 
         # Milk Composition Assessment
-        def assess_milk(row):
-            if pd.isnull(row["Fat%"]): return None
-            return "Normal" if (
-                3 <= row["Fat%"] <= 5 and
-                3.2 <= row["Protein%"] <= 3.8 and
-                4.4 <= row
+def assess_milk(row):
+    if pd.isnull(row["Fat%"]): return None
+    return "Normal" if (
+        3 <= row["Fat%"] <= 5 and
+        3.2 <= row["Protein%"] <= 3.8 and
+        4.4 <= row["Lactose%"] <= 4.6 and
+        row["SNF"] >= 8.0 and
+        -0.565 <= row["Freezing Point"] <= -0.532
+    ) else "Abnormal"
