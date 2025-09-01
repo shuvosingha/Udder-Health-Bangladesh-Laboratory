@@ -193,7 +193,7 @@ else:
         mime="text/csv"
     )
 
-from fpdf import FPDF
+from fpdf2 import FPDF
 import io
 
 def generate_scc_certificate(row):
