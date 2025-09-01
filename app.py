@@ -99,6 +99,10 @@ for i, row in st.session_state.data.iterrows():
 st.header("📈 Data Analysis & Certification")
 df = st.session_state.data.copy()
 
+if df.empty or "Somatic Cell Count" not in df.columns:
+    st.info("📭 No data available to analyze. Please submit farmer samples first.")
+else:
+
 # SCC Assessment
 df["SCC Grade"] = df["Somatic Cell Count"].apply(lambda x: (
     "Super Quality" if x <= 200000 else
@@ -143,6 +147,24 @@ st.dataframe(df[[
     "SCC Grade", "SCC Status", "Milk Comp Status", "TBC Status"
 ]])
 
+# --- Dashboard Summary ---
+st.header("📊 Lab Workflow Dashboard")
+
+total_samples = len(df)
+pending_scc = df["Somatic Cell Count"].isna().sum()
+pending_milk = df[["Fat%", "Protein%", "Lactose%", "SNF", "Freezing Point"]].isna().any(axis=1).sum()
+pending_tbc = df["TBC"].isna().sum()
+overdue = df[(df["Days Since Submission"] > 3) & (df["Pending Inputs"] != "✅ All Inputs Done")].shape[0]
+
+col1, col2, col3 = st.columns(3)
+col1.metric("🧑‍🌾 Total Submissions", total_samples)
+col2.metric("🟡 Pending SCC", pending_scc)
+col3.metric("🟣 Pending Milk Comp", pending_milk)
+
+col4, col5 = st.columns(2)
+col4.metric("🔵 Pending TBC", pending_tbc)
+col5.metric("🔴 Overdue Samples (>3 days)", overdue)
+
 # Certification Generator
 st.subheader("📄 Generate Certifications")
 cert_type = st.selectbox("Select Certification Type", ["Somatic Cell Count", "Milk Composition", "TBC"])
@@ -184,3 +206,4 @@ st.download_button(
     file_name="udder_health_data.csv",
     mime="text/csv"
 )
+
