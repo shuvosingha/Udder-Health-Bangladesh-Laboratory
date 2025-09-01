@@ -194,3 +194,20 @@ def assess_milk(row):
         row["SNF"] >= 8.0 and
         -0.565 <= row["Freezing Point"] <= -0.532
     ) else "Abnormal"
+
+
+# --- Pending Admin Input Tracker ---
+def check_pending(row):
+    pending = []
+    if pd.isnull(row["Somatic Cell Count"]):
+        pending.append("Admin1: SCC")
+    if pd.isnull(row["Fat%"]) or pd.isnull(row["Protein%"]) or pd.isnull(row["Lactose%"]) or pd.isnull(row["SNF"]) or pd.isnull(row["Freezing Point"]):
+        pending.append("Admin2: Milk Comp")
+    if pd.isnull(row["TBC"]):
+        pending.append("Admin3: TBC")
+    return ", ".join(pending) if pending else "✅ All Inputs Done"
+
+df["Pending Inputs"] = df.apply(check_pending, axis=1)
+
+st.subheader("🧾 Submission Status Overview")
+st.dataframe(df[["Farmer", "Date", "Farm", "Pending Inputs"]])
