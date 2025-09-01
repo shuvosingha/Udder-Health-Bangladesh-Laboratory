@@ -1,16 +1,3 @@
-Here’s your complete, production-ready `app.py` for the Udder Health Bangladesh lab system, Shuvo. It includes:
-
-✅ Secure login with username/password  
-🔐 Role-based access control  
-📥 Farmer sample submission  
-🧪 Admin1: Somatic Cell Count input  
-🥛 Admin2: Milk Composition input  
-🦠 Admin3: Total Bacterial Count input  
-📊 SuperAdmin: Full data access, download, and certification  
-📈 Centralized Data Analysis section for assessments  
-👤 Logout and session handling
-
----
 
 ### 🐄 Full `app.py` Code
 
